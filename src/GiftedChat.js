@@ -95,6 +95,25 @@ class GiftedChat extends React.Component {
     return inverted ? currentMessages.concat(messages) : messages.concat(currentMessages);
   }
 
+  componentDidUpdate(prevProps) {
+    if (prevProps.minInputToolbarHeight !== this.props.minInputToolbarHeight) {
+      this.setMessagesContainerHeight(this.getMessagesContainerHeightWithKeyboard());
+    }
+  }
+
+  setMessagesContainerHeight(newMessagesContainerHeight) {
+    if (this.props.isAnimated === true) {
+      Animated.timing(this.state.messagesContainerHeight, {
+        toValue: newMessagesContainerHeight,
+        duration: 210,
+      }).start();
+    } else {
+      this.setState({
+        messagesContainerHeight: newMessagesContainerHeight,
+      });
+    }
+  }
+
   getChildContext() {
     return {
       actionSheet: () => this._actionSheetRef,
@@ -251,16 +270,7 @@ class GiftedChat extends React.Component {
     this.setKeyboardHeight(e.endCoordinates ? e.endCoordinates.height : e.end.height);
     this.setBottomOffset(this.props.bottomOffset);
     const newMessagesContainerHeight = this.getMessagesContainerHeightWithKeyboard();
-    if (this.props.isAnimated === true) {
-      Animated.timing(this.state.messagesContainerHeight, {
-        toValue: newMessagesContainerHeight,
-        duration: 210,
-      }).start();
-    } else {
-      this.setState({
-        messagesContainerHeight: newMessagesContainerHeight,
-      });
-    }
+    this.setMessagesContainerHeight(newMessagesContainerHeight);
   }
 
   onKeyboardWillHide() {
