@@ -56,7 +56,7 @@ class GiftedChat extends React.Component {
     this.state = {
       isInitialized: false, // initialization will calculate maxHeight before rendering the chat
       composerHeight: MIN_COMPOSER_HEIGHT,
-      messagesContainerHeight: null,
+      inputMarginBottom: new Animated.Value(0),
       typingDisabled: false,
     };
 
@@ -95,21 +95,15 @@ class GiftedChat extends React.Component {
     return inverted ? currentMessages.concat(messages) : messages.concat(currentMessages);
   }
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.minInputToolbarHeight !== this.props.minInputToolbarHeight) {
-      this.setMessagesContainerHeight(this.getMessagesContainerHeightWithKeyboard());
-    }
-  }
-
-  setMessagesContainerHeight(newMessagesContainerHeight) {
+  setInputMarginBottom(value) {
     if (this.props.isAnimated === true) {
-      Animated.timing(this.state.messagesContainerHeight, {
-        toValue: newMessagesContainerHeight,
-        duration: 210,
+      Animated.timing(this.state.inputMarginBottom, {
+        toValue: value,
+        duration: 220,
       }).start();
     } else {
       this.setState({
-        messagesContainerHeight: newMessagesContainerHeight,
+        inputMarginBottom: value,
       });
     }
   }
@@ -199,7 +193,6 @@ class GiftedChat extends React.Component {
     return this._keyboardHeight;
   }
 
-
   setBottomOffset(value) {
     this._bottomOffset = value;
   }
@@ -267,27 +260,12 @@ class GiftedChat extends React.Component {
 
   onKeyboardWillShow(e) {
     this.setIsTypingDisabled(true);
-    this.setKeyboardHeight(e.endCoordinates ? e.endCoordinates.height : e.end.height);
-    this.setBottomOffset(this.props.bottomOffset);
-    const newMessagesContainerHeight = this.getMessagesContainerHeightWithKeyboard();
-    this.setMessagesContainerHeight(newMessagesContainerHeight);
+    this.setInputMarginBottom(e.endCoordinates.height);
   }
 
   onKeyboardWillHide() {
     this.setIsTypingDisabled(true);
-    this.setKeyboardHeight(0);
-    this.setBottomOffset(0);
-    const newMessagesContainerHeight = this.getBasicMessagesContainerHeight();
-    if (this.props.isAnimated === true) {
-      Animated.timing(this.state.messagesContainerHeight, {
-        toValue: newMessagesContainerHeight,
-        duration: 210,
-      }).start();
-    } else {
-      this.setState({
-        messagesContainerHeight: newMessagesContainerHeight,
-      });
-    }
+    this.setInputMarginBottom(0);
   }
 
   onKeyboardDidShow(e) {
@@ -311,24 +289,18 @@ class GiftedChat extends React.Component {
     this._messageContainerRef.scrollTo({ y: 0, animated });
   }
 
-
   renderMessages() {
-    const AnimatedView = this.props.isAnimated === true ? Animated.View : View;
+    // const AnimatedView = this.props.isAnimated === true ? Animated.View : View;
     return (
-      <AnimatedView
-        style={{
-          height: this.state.messagesContainerHeight,
-        }}
-      >
+      <View style={styles.container}>
         <MessageContainer
           {...this.props}
           invertibleScrollViewProps={this.invertibleScrollViewProps}
           messages={this.getMessages()}
           ref={(component) => (this._messageContainerRef = component)}
-
         />
         {this.renderChatFooter()}
-      </AnimatedView>
+      </View>
     );
   }
 
@@ -367,12 +339,8 @@ class GiftedChat extends React.Component {
       this.textInput.clear();
     }
     this.notifyInputTextReset();
-    const newComposerHeight = MIN_COMPOSER_HEIGHT;
-    const newMessagesContainerHeight = this.getMessagesContainerHeightWithKeyboard(newComposerHeight);
     this.setState({
       text: this.getTextFromProp(''),
-      composerHeight: newComposerHeight,
-      messagesContainerHeight: this.prepareMessagesContainerHeight(newMessagesContainerHeight),
     });
   }
 
@@ -384,10 +352,8 @@ class GiftedChat extends React.Component {
 
   onInputSizeChanged(size) {
     const newComposerHeight = Math.max(MIN_COMPOSER_HEIGHT, Math.min(MAX_COMPOSER_HEIGHT, size.height));
-    const newMessagesContainerHeight = this.getMessagesContainerHeightWithKeyboard(newComposerHeight);
     this.setState({
       composerHeight: newComposerHeight,
-      messagesContainerHeight: this.prepareMessagesContainerHeight(newMessagesContainerHeight),
     });
   }
 
@@ -417,13 +383,9 @@ class GiftedChat extends React.Component {
     }
     this.notifyInputTextReset();
     this.setMaxHeight(layout.height);
-    const newComposerHeight = MIN_COMPOSER_HEIGHT;
-    const newMessagesContainerHeight = this.getMessagesContainerHeightWithKeyboard(newComposerHeight);
     this.setState({
       isInitialized: true,
       text: this.getTextFromProp(''),
-      composerHeight: newComposerHeight,
-      messagesContainerHeight: this.prepareMessagesContainerHeight(newMessagesContainerHeight),
     });
   }
 
@@ -432,9 +394,6 @@ class GiftedChat extends React.Component {
     const { layout } = e.nativeEvent;
     if (this.getMaxHeight() !== layout.height || this.getIsFirstLayout() === true) {
       this.setMaxHeight(layout.height);
-      this.setState({
-        messagesContainerHeight: this.prepareMessagesContainerHeight(this.getBasicMessagesContainerHeight()),
-      });
     }
     if (this.getIsFirstLayout() === true) {
       this.setIsFirstLayout(false);
@@ -458,11 +417,14 @@ class GiftedChat extends React.Component {
     if (this.props.renderInputToolbar) {
       return this.props.renderInputToolbar(inputToolbarProps);
     }
+    return null;
+    /*
     return (
       <InputToolbar
         {...inputToolbarProps}
       />
     );
+    */
   }
 
   renderChatFooter() {
@@ -488,7 +450,9 @@ class GiftedChat extends React.Component {
         <ActionSheet ref={(component) => (this._actionSheetRef = component)}>
           <View style={styles.container} onLayout={this.onMainViewLayout}>
             {this.renderMessages()}
-            {this.renderInputToolbar()}
+            <Animated.View style={{ marginBottom: this.state.inputMarginBottom }}>
+              {this.renderInputToolbar()}
+            </Animated.View>
           </View>
         </ActionSheet>
       );
