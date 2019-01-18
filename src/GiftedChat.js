@@ -532,7 +532,7 @@ GiftedChat.defaultProps = {
   maxInputLength: null,
   forceGetKeyboardHeight: false,
   inverted: true,
-  handleInputPosition: false,
+  handleInputPosition: true,
 };
 
 GiftedChat.propTypes = {
