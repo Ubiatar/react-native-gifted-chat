@@ -72,6 +72,7 @@ class GiftedChat extends React.Component {
     this.onInitialLayoutViewLayout = this.onInitialLayoutViewLayout.bind(this);
 
     this.invertibleScrollViewProps = {
+      handleInputPosition: this.props.handleInputPosition,
       inverted: this.props.inverted,
       keyboardShouldPersistTaps: this.props.keyboardShouldPersistTaps,
       onKeyboardWillShow: this.onKeyboardWillShow,
@@ -450,7 +451,7 @@ class GiftedChat extends React.Component {
         <ActionSheet ref={(component) => (this._actionSheetRef = component)}>
           <View style={styles.container} onLayout={this.onMainViewLayout}>
             {this.renderMessages()}
-            <Animated.View style={{ marginBottom: this.state.inputMarginBottom }}>
+            <Animated.View style={this.props.handleInputPosition ? { marginBottom: this.state.inputMarginBottom } : {}}>
               {this.renderInputToolbar()}
             </Animated.View>
           </View>
@@ -531,6 +532,7 @@ GiftedChat.defaultProps = {
   maxInputLength: null,
   forceGetKeyboardHeight: false,
   inverted: true,
+  handleInputPosition: false,
 };
 
 GiftedChat.propTypes = {
@@ -581,6 +583,7 @@ GiftedChat.propTypes = {
   forceGetKeyboardHeight: PropTypes.bool,
   inverted: PropTypes.bool,
   textInputProps: PropTypes.object,
+  handleInputPosition: PropTypes.bool,
 };
 
 export {
